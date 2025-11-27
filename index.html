@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Media File Carousel</title>
+    <link rel="stylesheet" href="style.css" />
+    <!-- Bootstrap 3 & Font Awesome 4.7 -->
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <h1 class="text-center">Custom File Carousel</h1>
+      <div id="mediaGrid" class="grid-container"></div>
+
+      <!-- Bootstrap Modal -->
+      <div
+        id="carouselModal"
+        class="modal fade"
+        tabindex="-1"
+        role="dialog"
+        aria-labelledby="carouselModalLabel"
+      >
+        <div class="modal-dialog modal-lg" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button
+                type="button"
+                class="close"
+                data-dismiss="modal"
+                aria-label="Close"
+              >
+                <span aria-hidden="true">&times;</span>
+              </button>
+              <h4 class="modal-title" id="carouselModalLabel">Media Preview</h4>
+            </div>
+            <div class="modal-body">
+              <div class="carousel-wrapper">
+                <button
+                  id="prevButton"
+                  class="nav-button btn btn-default"
+                  onclick="prevMedia()"
+                  aria-label="Previous"
+                >
+                  <i class="fa fa-chevron-left"></i>
+                </button>
+                <div id="modalContent"></div>
+                <button
+                  id="nextButton"
+                  class="nav-button btn btn-default"
+                  onclick="nextMedia()"
+                  aria-label="Next"
+                >
+                  <i class="fa fa-chevron-right"></i>
+                </button>
+              </div>
+              <!-- Restored thumbnail strip below carousel -->
+              <div id="modalThumbnailStrip" class="thumbnail-strip"></div>
+              <h4 id="modalFileName" class="pull-left"></h4>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
