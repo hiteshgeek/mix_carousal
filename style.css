@@ -199,6 +199,7 @@ h1 {
   display: flex;
   justify-content: center;
   align-items: center;
+  background-color: #000;
   border-radius: 6px;
   overflow: hidden;
 }
@@ -215,7 +216,7 @@ h1 {
 #modalContent iframe {
   width: 100% !important;
   height: 100% !important;
-  min-height: 400px;
+  min-height: 65vh;
   border: none;
   background: #fff;
   display: block;

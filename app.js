@@ -331,33 +331,42 @@ $(document).on("keydown", function (e) {
       break;
     case "d":
     case "D": {
-      // Download current file (force download for all types)
+      // Download current file using PHP proxy
       if (mediaFiles[currentFileIndex]) {
         var url = mediaFiles[currentFileIndex].url;
         var filename = mediaFiles[currentFileIndex].name;
-        // Use fetch and blob for cross-origin and non-image files
-        fetch(url, { mode: "cors" })
-          .then(function (response) {
-            if (!response.ok) throw new Error("Network response was not ok");
-            return response.blob();
-          })
-          .then(function (blob) {
-            var blobUrl = window.URL.createObjectURL(blob);
-            var a = document.createElement("a");
-            a.style.display = "none";
-            a.href = blobUrl;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(function () {
-              document.body.removeChild(a);
-              window.URL.revokeObjectURL(blobUrl);
-            }, 200);
-          })
-          .catch(function () {
-            // fallback: open in new tab if download fails
-            window.open(url, "_blank");
-          });
+        var proxyUrl =
+          "/download.php?url=" +
+          encodeURIComponent(url) +
+          "&name=" +
+          encodeURIComponent(filename);
+        var a = document.createElement("a");
+        a.style.display = "none";
+        a.href = proxyUrl;
+        a.setAttribute("download", filename);
+        document.body.appendChild(a);
+        var evt = document.createEvent("MouseEvents");
+        evt.initMouseEvent(
+          "click",
+          true,
+          true,
+          window,
+          0,
+          0,
+          0,
+          0,
+          0,
+          false,
+          false,
+          false,
+          false,
+          0,
+          null
+        );
+        a.dispatchEvent(evt);
+        setTimeout(function () {
+          document.body.removeChild(a);
+        }, 200);
       }
       break;
     }
