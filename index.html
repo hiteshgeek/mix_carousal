@@ -548,6 +548,85 @@
         font-size: 0.875rem;
       }
 
+      /* Excel Preview Styles */
+      .excel-preview {
+        width: 100%;
+        height: 100%;
+        background: #1e293b;
+        border-radius: 1rem;
+        padding: 1rem;
+        overflow: auto;
+      }
+
+      .excel-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.875rem;
+        background: #0f172a;
+        border-radius: 0.5rem;
+        overflow: hidden;
+      }
+
+      .excel-table thead {
+        background: #059669;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+
+      .excel-table th {
+        padding: 0.75rem;
+        text-align: left;
+        font-weight: 600;
+        color: #f1f5f9;
+        border-bottom: 2px solid #10b981;
+        white-space: nowrap;
+      }
+
+      .excel-table td {
+        padding: 0.75rem;
+        color: #cbd5e1;
+        border-bottom: 1px solid #1e293b;
+        white-space: nowrap;
+      }
+
+      .excel-table tbody tr:hover {
+        background: #1e293b;
+      }
+
+      .excel-table tbody tr:nth-child(even) {
+        background: rgba(30, 41, 59, 0.3);
+      }
+
+      .excel-preview::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+
+      .excel-preview::-webkit-scrollbar-track {
+        background: #0f172a;
+        border-radius: 4px;
+      }
+
+      .excel-preview::-webkit-scrollbar-thumb {
+        background: #475569;
+        border-radius: 4px;
+      }
+
+      .excel-preview::-webkit-scrollbar-thumb:hover {
+        background: #64748b;
+      }
+
+      .excel-info {
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+        background: rgba(5, 150, 105, 0.1);
+        border: 1px solid rgba(5, 150, 105, 0.3);
+        border-radius: 0.5rem;
+        color: #6ee7b7;
+        font-size: 0.875rem;
+      }
+
       /* Loading Spinner */
       .loading-container {
         display: flex;
@@ -802,6 +881,7 @@
       </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
       var MEDIA_FILES = [
         {
@@ -854,8 +934,8 @@
           id: 7,
           type: "excel",
           thumbnail: "https://cdn-icons-png.flaticon.com/512/732/732220.png",
-          url: "https://file-examples.com/storage/fe783c96ad66f0eae774f85/2017/02/file_example_XLSX_10.xlsx",
-          name: "Financial_Report.xlsx",
+          url: "media/excel_2.xlsx",
+          name: "Sample_Data.xlsx",
         },
         {
           id: 8,
@@ -879,6 +959,81 @@
           url: "https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1200&h=800&fit=crop",
           name: "Ocean_Sunset.jpg",
         },
+        {
+          id: 11,
+          type: "image",
+          thumbnail:
+            "https://images.unsplash.com/photo-1541963463532-d68292c34b19?w=150&h=150&fit=crop",
+          url: "https://images.unsplash.com/photo-1541963463532-d68292c34b19?w=1200&h=800&fit=crop",
+          name: "Book_and_Coffee.jpg",
+        },
+        {
+          id: 12,
+          type: "video",
+          thumbnail:
+            "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=150&h=150&fit=crop",
+          url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+          name: "ForBiggerBlazes.mp4",
+        },
+        {
+          id: 13,
+          type: "pdf",
+          thumbnail: "https://cdn-icons-png.flaticon.com/512/337/337946.png",
+          url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+          name: "W3C_Dummy.pdf",
+        },
+        {
+          id: 14,
+          type: "csv",
+          thumbnail: "https://cdn-icons-png.flaticon.com/512/6133/6133884.png",
+          url: "https://raw.githubusercontent.com/datasets/gdp-life-expectancy/main/data/gdp-life-expectancy.csv",
+          name: "GDP_Life_Expectancy.csv",
+        },
+        {
+          id: 15,
+          type: "text",
+          thumbnail: "https://cdn-icons-png.flaticon.com/512/337/337932.png",
+          url: "https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt",
+          name: "English_Words_List.txt",
+        },
+        {
+          id: 16,
+          type: "image",
+          thumbnail:
+            "https://images.pexels.com/photos/34875154/pexels-photo-34875154.jpeg",
+          url: "https://images.pexels.com/photos/34875154/pexels-photo-34875154.jpeg",
+          name: "Forest_Path.jpg",
+        },
+        {
+          id: 17,
+          type: "excel",
+          thumbnail: "https://cdn-icons-png.flaticon.com/512/732/732220.png",
+          // NOTE: Use a relative path assuming it's hosted on your local server.
+          url: "media/excel_3.xlsx",
+          name: "Project_Timeline.xlsx",
+        },
+        {
+          id: 18,
+          type: "video",
+          thumbnail:
+            "https://images.pexels.com/photos/27063861/pexels-photo-27063861.jpeg",
+          url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+          name: "TearsOfSteel.mp4",
+        },
+        {
+          id: 19,
+          type: "pdf",
+          thumbnail: "https://cdn-icons-png.flaticon.com/512/337/337946.png",
+          url: "https://www.iso.org/files/live/sites/isoorg/files/archive/pdf/en/annual_report_2015.pdf",
+          name: "ISO_Report_2015.pdf",
+        },
+        {
+          id: 20,
+          type: "csv",
+          thumbnail: "https://cdn-icons-png.flaticon.com/512/6133/6133884.png",
+          url: "https://raw.githubusercontent.com/datasets/country-list/main/data.csv",
+          name: "Country_List.csv",
+        },
       ];
 
       var currentIndex = 0;
@@ -891,7 +1046,8 @@
             file.type === "video" ||
             file.type === "pdf" ||
             file.type === "text" ||
-            file.type === "csv"
+            file.type === "csv" ||
+            file.type === "excel"
           ) {
             loadingProgress[index] = 0;
 
@@ -979,6 +1135,34 @@
               xhr.onload = function () {
                 if (xhr.status === 200) {
                   preloadedMedia[index] = xhr.responseText;
+                  loadingProgress[index] = 100;
+                }
+              };
+
+              xhr.onerror = function () {
+                loadingProgress[index] = 100;
+              };
+
+              xhr.send();
+            } else if (file.type === "excel") {
+              var xhr = new XMLHttpRequest();
+              xhr.open("GET", file.url, true);
+              xhr.responseType = "arraybuffer";
+
+              xhr.onprogress = function (e) {
+                if (e.lengthComputable) {
+                  var percent = (e.loaded / e.total) * 100;
+                  loadingProgress[index] = Math.min(percent, 99);
+                } else {
+                  if (loadingProgress[index] < 90) {
+                    loadingProgress[index] += 5;
+                  }
+                }
+              };
+
+              xhr.onload = function () {
+                if (xhr.status === 200) {
+                  preloadedMedia[index] = xhr.response;
                   loadingProgress[index] = 100;
                 }
               };
@@ -1248,6 +1432,47 @@
               }
             }, 100);
           }
+        } else if (file.type === "excel") {
+          if (
+            preloadedMedia[currentIndex] &&
+            loadingProgress[currentIndex] === 100
+          ) {
+            var arrayBuffer = preloadedMedia[currentIndex];
+            var tableHtml = parseExcel(arrayBuffer);
+            content.innerHTML = tableHtml;
+          } else {
+            var progress = loadingProgress[currentIndex] || 0;
+            content.innerHTML =
+              '<div class="loading-container">' +
+              '<div class="spinner"></div>' +
+              '<p class="loading-text">Loading Excel file... ' +
+              Math.round(progress) +
+              "%</p>" +
+              '<div class="progress-bar-container"><div class="progress-bar" style="width: ' +
+              progress +
+              '%"></div></div>' +
+              "</div>";
+
+            var checkInterval = setInterval(function () {
+              if (
+                loadingProgress[currentIndex] === 100 &&
+                preloadedMedia[currentIndex]
+              ) {
+                clearInterval(checkInterval);
+                if (MEDIA_FILES[currentIndex].type === "excel") {
+                  renderModalContent();
+                }
+              } else {
+                var prog = loadingProgress[currentIndex] || 0;
+                var progressText = content.querySelector(".loading-text");
+                var progressBar = content.querySelector(".progress-bar");
+                if (progressText)
+                  progressText.textContent =
+                    "Loading Excel file... " + Math.round(prog) + "%";
+                if (progressBar) progressBar.style.width = prog + "%";
+              }
+            }, 100);
+          }
         } else {
           content.innerHTML =
             '<div class="placeholder-content">' +
@@ -1346,6 +1571,77 @@
         html += "</tbody></table></div>";
 
         return html;
+      }
+
+      function parseExcel(arrayBuffer) {
+        try {
+          var workbook = XLSX.read(arrayBuffer, { type: "array" });
+          var firstSheetName = workbook.SheetNames[0];
+          var worksheet = workbook.Sheets[firstSheetName];
+          var data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+          if (data.length === 0) {
+            return '<div class="placeholder-content"><p>No data found in Excel file.</p></div>';
+          }
+
+          // Limit to first 100 rows for performance
+          var maxRows = Math.min(data.length, 100);
+          var truncated = data.length > 100;
+
+          var html = '<div class="excel-preview">';
+
+          if (workbook.SheetNames.length > 1) {
+            html +=
+              '<div class="excel-info">Showing sheet: "' +
+              escapeHtml(firstSheetName) +
+              '" (Total sheets: ' +
+              workbook.SheetNames.length +
+              ")</div>";
+          }
+
+          if (truncated) {
+            html +=
+              '<div class="excel-info">Showing first 100 rows of ' +
+              data.length +
+              " total rows. Download file to see all data.</div>";
+          }
+
+          html += '<table class="excel-table"><thead><tr>';
+
+          var headers = data[0];
+          for (var h = 0; h < headers.length; h++) {
+            var headerValue =
+              headers[h] !== undefined && headers[h] !== null
+                ? String(headers[h])
+                : "";
+            html += "<th>" + escapeHtml(headerValue) + "</th>";
+          }
+
+          html += "</tr></thead><tbody>";
+
+          for (var r = 1; r < maxRows; r++) {
+            html += "<tr>";
+            for (var c = 0; c < data[r].length; c++) {
+              var cellValue =
+                data[r][c] !== undefined && data[r][c] !== null
+                  ? String(data[r][c])
+                  : "";
+              html += "<td>" + escapeHtml(cellValue) + "</td>";
+            }
+            html += "</tr>";
+          }
+
+          html += "</tbody></table></div>";
+
+          return html;
+        } catch (e) {
+          return (
+            '<div class="placeholder-content">' +
+            '<h3 class="placeholder-title">Error Reading Excel File</h3>' +
+            '<p class="placeholder-desc">Unable to parse the Excel file. Please download it to view.</p>' +
+            "</div>"
+          );
+        }
       }
 
       function renderThumbnailStrip() {
