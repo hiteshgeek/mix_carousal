@@ -435,6 +435,119 @@
         background: #2563eb;
       }
 
+      /* Text Preview Styles */
+      .text-preview {
+        width: 100%;
+        height: 100%;
+        background: #1e293b;
+        border-radius: 1rem;
+        padding: 2rem;
+        overflow-y: auto;
+        font-family: "Courier New", monospace;
+        color: #e2e8f0;
+        font-size: 0.875rem;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+
+      .text-preview::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      .text-preview::-webkit-scrollbar-track {
+        background: #0f172a;
+        border-radius: 4px;
+      }
+
+      .text-preview::-webkit-scrollbar-thumb {
+        background: #475569;
+        border-radius: 4px;
+      }
+
+      .text-preview::-webkit-scrollbar-thumb:hover {
+        background: #64748b;
+      }
+
+      /* CSV Preview Styles */
+      .csv-preview {
+        width: 100%;
+        height: 100%;
+        background: #1e293b;
+        border-radius: 1rem;
+        padding: 1rem;
+        overflow: auto;
+      }
+
+      .csv-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.875rem;
+        background: #0f172a;
+        border-radius: 0.5rem;
+        overflow: hidden;
+      }
+
+      .csv-table thead {
+        background: #334155;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+
+      .csv-table th {
+        padding: 0.75rem;
+        text-align: left;
+        font-weight: 600;
+        color: #f1f5f9;
+        border-bottom: 2px solid #475569;
+        white-space: nowrap;
+      }
+
+      .csv-table td {
+        padding: 0.75rem;
+        color: #cbd5e1;
+        border-bottom: 1px solid #1e293b;
+        white-space: nowrap;
+      }
+
+      .csv-table tbody tr:hover {
+        background: #1e293b;
+      }
+
+      .csv-table tbody tr:nth-child(even) {
+        background: rgba(30, 41, 59, 0.3);
+      }
+
+      .csv-preview::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+
+      .csv-preview::-webkit-scrollbar-track {
+        background: #0f172a;
+        border-radius: 4px;
+      }
+
+      .csv-preview::-webkit-scrollbar-thumb {
+        background: #475569;
+        border-radius: 4px;
+      }
+
+      .csv-preview::-webkit-scrollbar-thumb:hover {
+        background: #64748b;
+      }
+
+      .csv-info {
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        border-radius: 0.5rem;
+        color: #93c5fd;
+        font-size: 0.875rem;
+      }
+
       /* Loading Spinner */
       .loading-container {
         display: flex;
@@ -748,15 +861,15 @@
           id: 8,
           type: "csv",
           thumbnail: "https://cdn-icons-png.flaticon.com/512/6133/6133884.png",
-          url: "https://people.sc.fsu.edu/~jburkardt/data/csv/addresses.csv",
-          name: "Address_List.csv",
+          url: "https://gist.githubusercontent.com/armgilles/194bcff35001e7eb53a2a8b441e8b2c6/raw/92200bc0a673d5ce2110aaad4544ed6c4010f687/pokemon.csv",
+          name: "Pokemon_Data.csv",
         },
         {
           id: 9,
           type: "text",
           thumbnail: "https://cdn-icons-png.flaticon.com/512/337/337932.png",
-          url: "https://www.gutenberg.org/cache/epub/1342/pg1342.txt",
-          name: "Pride_and_Prejudice.txt",
+          url: "https://raw.githubusercontent.com/minimaxir/big-list-of-naughty-strings/master/blns.txt",
+          name: "Sample_Text.txt",
         },
         {
           id: 10,
@@ -774,7 +887,12 @@
 
       function preloadMedia() {
         MEDIA_FILES.forEach(function (file, index) {
-          if (file.type === "video" || file.type === "pdf") {
+          if (
+            file.type === "video" ||
+            file.type === "pdf" ||
+            file.type === "text" ||
+            file.type === "csv"
+          ) {
             loadingProgress[index] = 0;
 
             if (file.type === "video") {
@@ -833,6 +951,34 @@
                   var blob = xhr.response;
                   var url = URL.createObjectURL(blob);
                   preloadedMedia[index] = url;
+                  loadingProgress[index] = 100;
+                }
+              };
+
+              xhr.onerror = function () {
+                loadingProgress[index] = 100;
+              };
+
+              xhr.send();
+            } else if (file.type === "text" || file.type === "csv") {
+              var xhr = new XMLHttpRequest();
+              xhr.open("GET", file.url, true);
+              xhr.responseType = "text";
+
+              xhr.onprogress = function (e) {
+                if (e.lengthComputable) {
+                  var percent = (e.loaded / e.total) * 100;
+                  loadingProgress[index] = Math.min(percent, 99);
+                } else {
+                  if (loadingProgress[index] < 90) {
+                    loadingProgress[index] += 5;
+                  }
+                }
+              };
+
+              xhr.onload = function () {
+                if (xhr.status === 200) {
+                  preloadedMedia[index] = xhr.responseText;
                   loadingProgress[index] = 100;
                 }
               };
@@ -1014,6 +1160,94 @@
               }
             }, 100);
           }
+        } else if (file.type === "text") {
+          if (
+            preloadedMedia[currentIndex] &&
+            loadingProgress[currentIndex] === 100
+          ) {
+            var textContent = preloadedMedia[currentIndex];
+            // Limit preview to first 50000 characters for very large files
+            var preview =
+              textContent.length > 50000
+                ? textContent.substring(0, 50000) +
+                  "\n\n... (File truncated for preview. Download to see full content.)"
+                : textContent;
+            content.innerHTML =
+              '<div class="text-preview">' + escapeHtml(preview) + "</div>";
+          } else {
+            var progress = loadingProgress[currentIndex] || 0;
+            content.innerHTML =
+              '<div class="loading-container">' +
+              '<div class="spinner"></div>' +
+              '<p class="loading-text">Loading text file... ' +
+              Math.round(progress) +
+              "%</p>" +
+              '<div class="progress-bar-container"><div class="progress-bar" style="width: ' +
+              progress +
+              '%"></div></div>' +
+              "</div>";
+
+            var checkInterval = setInterval(function () {
+              if (
+                loadingProgress[currentIndex] === 100 &&
+                preloadedMedia[currentIndex]
+              ) {
+                clearInterval(checkInterval);
+                if (MEDIA_FILES[currentIndex].type === "text") {
+                  renderModalContent();
+                }
+              } else {
+                var prog = loadingProgress[currentIndex] || 0;
+                var progressText = content.querySelector(".loading-text");
+                var progressBar = content.querySelector(".progress-bar");
+                if (progressText)
+                  progressText.textContent =
+                    "Loading text file... " + Math.round(prog) + "%";
+                if (progressBar) progressBar.style.width = prog + "%";
+              }
+            }, 100);
+          }
+        } else if (file.type === "csv") {
+          if (
+            preloadedMedia[currentIndex] &&
+            loadingProgress[currentIndex] === 100
+          ) {
+            var csvContent = preloadedMedia[currentIndex];
+            var tableHtml = parseCSV(csvContent);
+            content.innerHTML = tableHtml;
+          } else {
+            var progress = loadingProgress[currentIndex] || 0;
+            content.innerHTML =
+              '<div class="loading-container">' +
+              '<div class="spinner"></div>' +
+              '<p class="loading-text">Loading CSV file... ' +
+              Math.round(progress) +
+              "%</p>" +
+              '<div class="progress-bar-container"><div class="progress-bar" style="width: ' +
+              progress +
+              '%"></div></div>' +
+              "</div>";
+
+            var checkInterval = setInterval(function () {
+              if (
+                loadingProgress[currentIndex] === 100 &&
+                preloadedMedia[currentIndex]
+              ) {
+                clearInterval(checkInterval);
+                if (MEDIA_FILES[currentIndex].type === "csv") {
+                  renderModalContent();
+                }
+              } else {
+                var prog = loadingProgress[currentIndex] || 0;
+                var progressText = content.querySelector(".loading-text");
+                var progressBar = content.querySelector(".progress-bar");
+                if (progressText)
+                  progressText.textContent =
+                    "Loading CSV file... " + Math.round(prog) + "%";
+                if (progressBar) progressBar.style.width = prog + "%";
+              }
+            }, 100);
+          }
         } else {
           content.innerHTML =
             '<div class="placeholder-content">' +
@@ -1030,6 +1264,88 @@
             "</button>" +
             "</div>";
         }
+      }
+
+      function escapeHtml(text) {
+        var map = {
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#039;",
+        };
+        return text.replace(/[&<>"']/g, function (m) {
+          return map[m];
+        });
+      }
+
+      function parseCSV(csvText) {
+        var lines = csvText.split("\n");
+        var rows = [];
+
+        // Parse CSV with basic handling of quoted values
+        for (var i = 0; i < lines.length; i++) {
+          if (lines[i].trim() === "") continue;
+
+          var row = [];
+          var current = "";
+          var inQuotes = false;
+
+          for (var j = 0; j < lines[i].length; j++) {
+            var char = lines[i][j];
+
+            if (char === '"') {
+              inQuotes = !inQuotes;
+            } else if (char === "," && !inQuotes) {
+              row.push(current.trim());
+              current = "";
+            } else {
+              current += char;
+            }
+          }
+          row.push(current.trim());
+          rows.push(row);
+        }
+
+        if (rows.length === 0) {
+          return '<div class="placeholder-content"><p>No data found in CSV file.</p></div>';
+        }
+
+        // Limit to first 100 rows for performance
+        var maxRows = Math.min(rows.length, 100);
+        var headers = rows[0];
+        var truncated = rows.length > 100;
+
+        var html = '<div class="csv-preview">';
+
+        if (truncated) {
+          html +=
+            '<div class="csv-info">Showing first 100 rows of ' +
+            rows.length +
+            " total rows. Download file to see all data.</div>";
+        }
+
+        html += '<table class="csv-table"><thead><tr>';
+
+        for (var h = 0; h < headers.length; h++) {
+          html +=
+            "<th>" + escapeHtml(headers[h].replace(/^"|"$/g, "")) + "</th>";
+        }
+
+        html += "</tr></thead><tbody>";
+
+        for (var r = 1; r < maxRows; r++) {
+          html += "<tr>";
+          for (var c = 0; c < rows[r].length; c++) {
+            html +=
+              "<td>" + escapeHtml(rows[r][c].replace(/^"|"$/g, "")) + "</td>";
+          }
+          html += "</tr>";
+        }
+
+        html += "</tbody></table></div>";
+
+        return html;
       }
 
       function renderThumbnailStrip() {
