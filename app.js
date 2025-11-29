@@ -206,9 +206,8 @@ function updateThumbnailProgress(index) {
 
 function preloadMedia() {
   MEDIA_FILES.forEach(function (file, index) {
-    // 🚫 Skip if already fully loaded and cached
+    // Skip preload if image was loaded already in grid
     if (preloadedMedia[index] && loadingProgress[index] === 100) {
-      console.log(`Using cached version for file ${index}: ${file.name}`);
       return;
     }
 
@@ -359,13 +358,20 @@ function renderModalContent() {
 
   // IMAGE Display with cache support
   if (file.type === "image") {
+    // 🚀 If already cached from main view — use immediately
+    if (preloadedMedia[currentIndex]) {
+      content.innerHTML = `<img src="${preloadedMedia[currentIndex]}" alt="${file.name}">`;
+      return;
+    }
+
+    // Show loading progress if still being preloaded
     if (loadingProgress[currentIndex] < 100) {
       showLoading(content, "IMAGE");
       return;
     }
-    content.innerHTML = `<img src="${
-      preloadedMedia[currentIndex] || file.url
-    }" alt="${file.name}" />`;
+
+    // Fallback if no preload done
+    content.innerHTML = `<img src="${file.url}" alt="${file.name}">`;
   }
 
   // VIDEO Display with cache support
@@ -726,14 +732,21 @@ document.addEventListener("keydown", function (e) {
 function applyLazyPlaceholder() {
   const thumbnails = document.querySelectorAll(".lazy-thumb");
 
-  thumbnails.forEach((img) => {
-    img.addEventListener("load", () => {
+  thumbnails.forEach((img, index) => {
+    function markLoaded() {
       img.parentElement.classList.add("loaded");
-    });
 
-    // In case image is already cached
+      // 🚀 Cache image if not already stored
+      if (!preloadedMedia[index]) {
+        preloadedMedia[index] = img.src; // Use the already-loaded image URL
+        loadingProgress[index] = 100; // Mark as fully loaded
+      }
+    }
+
+    img.addEventListener("load", markLoaded);
+
     if (img.complete) {
-      img.parentElement.classList.add("loaded");
+      markLoaded();
     }
   });
 }
