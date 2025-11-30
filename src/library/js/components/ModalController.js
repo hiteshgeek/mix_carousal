@@ -1,4 +1,4 @@
-// ModalController.js - Handles modal operations
+// ModalController.js - Handles modal operations (FIXED)
 
 export class ModalController {
   constructor(options, preloader, renderer) {
@@ -122,15 +122,20 @@ export class ModalController {
             ? '<div class="mg-video-icon-wrapper"><i class="fa fa-play mg-video-icon"></i></div>'
             : "";
 
+        // 🔹 FIX: Check if file is already loaded before rendering progress indicator
+        const progress = this.preloader.getProgress(i);
+        const isLoaded = progress === 100;
+        const loadedClass = isLoaded ? " mg-loaded" : "";
+
         return `
-        <div class="mg-strip-thumbnail${activeClass}" data-mg-strip-index="${i}">
+        <div class="mg-strip-thumbnail${activeClass}${loadedClass}" data-mg-strip-index="${i}">
           <div class="mg-thumb-wrapper">
             ${videoIcon}
             <img src="${
               file.thumbnail
             }" class="mg-thumbnail-image mg-lazy-thumb" />
           </div>
-          ${this.renderProgressIndicator(i)}
+          ${!isLoaded ? this.renderProgressIndicator(i) : ""}
         </div>
       `;
       })
@@ -175,14 +180,22 @@ export class ModalController {
     const progressText = card.querySelector(".mg-progress-text");
     const progressCircle = card.querySelector(".mg-circle-progress");
 
+    // 🔹 FIX: Properly hide indicator and mark as loaded when complete
     if (progress >= 100) {
       card.classList.add("mg-loaded");
-      indicator?.classList.remove("mg-active");
+      if (indicator) {
+        indicator.classList.remove("mg-active");
+        // 🔹 CRITICAL: Remove the indicator entirely from DOM
+        indicator.remove();
+      }
       return;
     }
 
+    // 🔹 While loading (0-99%)
     if (progress > 0 && progress < 100) {
-      indicator?.classList.add("mg-active");
+      if (indicator && !indicator.classList.contains("mg-active")) {
+        indicator.classList.add("mg-active");
+      }
       const offset = this.CIRCUMFERENCE - (progress / 100) * this.CIRCUMFERENCE;
       if (progressCircle) progressCircle.style.strokeDashoffset = offset;
       if (progressText) progressText.textContent = `${Math.round(progress)}%`;

@@ -1,4 +1,4 @@
-// MixCarousal.js - Main Library Class
+// MixCarousal.js - Main Library Class (FIXED)
 
 import { MediaPreloader } from "./MediaPreloader.js";
 import { MediaRenderer } from "./MediaRenderer.js";
@@ -202,6 +202,7 @@ export default class MixCarousal {
     setTimeout(() => this.applyLazyPlaceholder(), 300);
   }
 
+  // 🔹 FIXED: Properly apply loaded class to grid thumbnails
   applyLazyPlaceholder() {
     const thumbnails =
       this.options.container.querySelectorAll(".mg-lazy-thumb");
@@ -209,8 +210,13 @@ export default class MixCarousal {
 
     thumbnails.forEach((img, index) => {
       const markLoaded = () => {
-        img.parentElement.classList.add("mg-loaded");
+        // 🔹 FIX: Add mg-loaded class to the wrapper, not just parent
+        const wrapper = img.closest(".mg-thumb-wrapper");
+        if (wrapper) {
+          wrapper.classList.add("mg-loaded");
+        }
 
+        // Cache the loaded image
         if (!this.preloader.preloadedMedia[index]) {
           this.preloader.preloadedMedia[index] = img.src;
           this.preloader.loadingProgress[index] = 100;
