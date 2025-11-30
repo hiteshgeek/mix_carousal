@@ -28,7 +28,7 @@ export class MediaPreloader {
     });
   }
 
-  // 🔹 FIXED: Stop all active preloading
+  // 🔹 FIXED: Stop all active preloading and reset progress
   stop() {
     this.isPaused = true;
     Object.keys(this.activeRequests).forEach((index) => {
@@ -36,6 +36,13 @@ export class MediaPreloader {
       if (xhr) {
         xhr.abort();
         delete this.activeRequests[index];
+      }
+    });
+    // Reset progress for stopped files
+    Object.keys(this.loadingProgress).forEach((index) => {
+      if (this.loadingProgress[index] < 100) {
+        this.loadingProgress[index] = 0;
+        this.notifyProgress(index, 0);
       }
     });
   }
@@ -96,7 +103,10 @@ export class MediaPreloader {
       return Promise.resolve(null);
     }
 
-    this.loadingProgress[index] = this.loadingProgress[index] || 0;
+    // Initialize progress if not set
+    if (this.loadingProgress[index] === undefined) {
+      this.loadingProgress[index] = 0;
+    }
 
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
@@ -157,6 +167,7 @@ export class MediaPreloader {
 
       xhr.onabort = () => {
         delete this.activeRequests[index];
+        // Don't resolve, just exit silently when aborted
         resolve(null);
       };
 
