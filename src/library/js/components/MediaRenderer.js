@@ -1,9 +1,10 @@
-// MediaRenderer.js - Handles rendering of different media types
+// MediaRenderer.js - Handles rendering with Fixed Autoload Logic
 
 export class MediaRenderer {
   constructor(options, preloader) {
     this.options = options;
     this.preloader = preloader;
+    this.activeLoadingInterval = null; // 🔹 FIX: Track active interval
   }
 
   canPreview(fileType) {
@@ -11,11 +12,26 @@ export class MediaRenderer {
   }
 
   render(file, index, container) {
+    // 🔹 FIX: Clear any existing loading interval when rendering new content
+    this.clearLoadingInterval();
+
     if (!this.canPreview(file.type)) {
       return this.renderNoPreview(file, container);
     }
 
     const progress = this.preloader.getProgress(index);
+
+    // 🔹 FIXED: Check if file was NOT auto-preloaded
+    const wasAutoPreloaded = this.wasFileAutoPreloaded(file);
+
+    // If file was not auto-preloaded and not loaded yet, check manual loading
+    if (!wasAutoPreloaded && progress === 0) {
+      if (this.options.enableManualLoading) {
+        return this.renderLoadButton(file, index, container);
+      } else {
+        return this.renderNoPreviewManualDisabled(file, container);
+      }
+    }
 
     // Show loading if still preloading
     if (progress > 0 && progress < 100) {
@@ -41,7 +57,120 @@ export class MediaRenderer {
     }
   }
 
+  // 🔹 NEW: Clear active loading interval
+  clearLoadingInterval() {
+    if (this.activeLoadingInterval) {
+      clearInterval(this.activeLoadingInterval);
+      this.activeLoadingInterval = null;
+    }
+  }
+
+  // 🔹 FIXED: Check if file type was in autoPreload setting
+  wasFileAutoPreloaded(file) {
+    const autoPreload = this.options.autoPreload;
+
+    if (autoPreload === true) {
+      return true; // All files were auto-preloaded
+    }
+
+    if (Array.isArray(autoPreload)) {
+      return autoPreload.includes(file.type); // Check if type was in array
+    }
+
+    return false; // autoPreload was false
+  }
+
+  // 🔹 Render load button for manual loading
+  renderLoadButton(file, index, container) {
+    container.innerHTML = `
+      <div class="mg-placeholder-content">
+        <svg class="mg-placeholder-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+        </svg>
+        <h3 class="mg-placeholder-title">Preview Not Loaded</h3>
+        <p class="mg-placeholder-desc">
+          Click the button below to load and preview this ${file.type}.
+        </p>
+        <button class="mg-placeholder-load-btn" data-mg-load-file="${index}">
+          <svg class="mg-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+          </svg>
+          Load Preview
+        </button>
+      </div>
+    `;
+
+    // Add click handler for load button
+    const loadBtn = container.querySelector("[data-mg-load-file]");
+    loadBtn?.addEventListener("click", () => {
+      this.loadAndRenderFile(file, index, container);
+    });
+  }
+
+  // 🔹 Render message when manual loading is disabled
+  renderNoPreviewManualDisabled(file, container) {
+    container.innerHTML = `
+      <div class="mg-placeholder-content">
+        <svg class="mg-placeholder-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+            d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+        </svg>
+        <h3 class="mg-placeholder-title">Preview Not Available</h3>
+        <p class="mg-placeholder-desc">
+          This file was not preloaded. Download the file to view it.
+        </p>
+        <button class="mg-placeholder-download-btn" data-mg-download-current>
+          <svg class="mg-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+          </svg>
+          Download File
+        </button>
+      </div>
+    `;
+
+    const downloadBtn = container.querySelector("[data-mg-download-current]");
+    downloadBtn?.addEventListener("click", () => {
+      const modal = this.options.container.querySelector("[data-mg-modal]");
+      const modalDownloadBtn = modal.querySelector("[data-mg-download]");
+      modalDownloadBtn?.click();
+    });
+  }
+
+  // 🔹 Load file and render once loaded
+  async loadAndRenderFile(file, index, container) {
+    // Show loading state
+    this.renderLoading(file.type, 0, container, index);
+
+    try {
+      // Start preloading this specific file
+      await this.preloader.preloadFile(file, index);
+
+      // Re-render with loaded content
+      this.render(file, index, container);
+    } catch (error) {
+      this.clearLoadingInterval(); // 🔹 FIX: Clear interval on error
+      container.innerHTML = `
+        <div class="mg-placeholder-content">
+          <svg class="mg-placeholder-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <h3 class="mg-placeholder-title">Failed to Load</h3>
+          <p class="mg-placeholder-desc">
+            Could not load the file. Try downloading it instead.
+          </p>
+        </div>
+      `;
+    }
+  }
+
   renderLoading(type, progress, container, index) {
+    // 🔹 FIX: Clear any existing interval first
+    this.clearLoadingInterval();
+
     container.innerHTML = `
       <div class="mg-loading-container">
         <div class="mg-spinner"></div>
@@ -54,24 +183,27 @@ export class MediaRenderer {
       </div>
     `;
 
-    // Poll for completion
-    const checkInterval = setInterval(() => {
+    // 🔹 FIX: Store interval reference and clear it when done
+    this.activeLoadingInterval = setInterval(() => {
       const currentProg = this.preloader.getProgress(index);
+
       if (currentProg === 100) {
-        clearInterval(checkInterval);
-        // Re-render actual content
+        this.clearLoadingInterval(); // 🔹 FIX: Clear interval when complete
         const file = this.options.files[index];
         this.render(file, index, container);
       } else {
         const progressText = container.querySelector(".mg-loading-text");
         const progressBar = container.querySelector(".mg-progress-bar");
-        if (progressText) {
+
+        // 🔹 FIX: Check if elements still exist before updating
+        if (progressText && progressBar) {
           progressText.textContent = `Loading ${type.toUpperCase()}... ${Math.round(
             currentProg
           )}%`;
-        }
-        if (progressBar) {
           progressBar.style.width = `${currentProg}%`;
+        } else {
+          // Elements no longer exist, clear interval
+          this.clearLoadingInterval();
         }
       }
     }, 100);
@@ -302,6 +434,11 @@ export class MediaRenderer {
       "'": "&#039;",
     };
     return text.replace(/[&<>"']/g, (m) => map[m]);
+  }
+
+  // 🔹 NEW: Cleanup method to clear intervals
+  cleanup() {
+    this.clearLoadingInterval();
   }
 }
 

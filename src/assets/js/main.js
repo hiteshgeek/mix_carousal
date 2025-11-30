@@ -147,7 +147,8 @@ const mediaFiles = [
 const gallery = new MixCarousal({
   container: document.getElementById("gallery"),
   files: mediaFiles,
-  autoPreload: true,
+  autoPreload: false,
+  // enableManualLoading: true,
   showShortcuts: true,
   maxPreviewRows: 100,
   maxTextPreviewChars: 50000,

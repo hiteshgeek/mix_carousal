@@ -1,4 +1,4 @@
-// MixCarousal.js - Main Library Class (FIXED)
+// MixCarousal.js - Main Library Class (FIXED - Autoload Options)
 
 import { MediaPreloader } from "./MediaPreloader.js";
 import { MediaRenderer } from "./MediaRenderer.js";
@@ -10,8 +10,13 @@ export default class MixCarousal {
     this.options = {
       container: options.container || document.body,
       files: options.files || [],
+      // 🔹 FIXED: autoPreload can be true, false, or array of file types
       autoPreload:
         options.autoPreload !== undefined ? options.autoPreload : true,
+      enableManualLoading:
+        options.enableManualLoading !== undefined
+          ? options.enableManualLoading
+          : true,
       visibleTypes: options.visibleTypes || [
         "image",
         "video",
@@ -52,15 +57,37 @@ export default class MixCarousal {
   init() {
     this.render();
 
-    if (this.options.autoPreload) {
-      // 🔹 FIX: Only preload files that are both visible AND previewable
-      this.preloader.preloadAll(this.getPreloadableFiles());
+    // 🔹 FIXED: Check autoPreload type and preload accordingly
+    if (this.shouldAutoPreload()) {
+      this.preloader.preloadAll(this.getAutoPreloadFiles());
     }
 
     this.attachEventListeners();
   }
 
-  // 🔹 NEW: Get files that should be preloaded (visible AND previewable)
+  // 🔹 NEW: Check if autoPreload is enabled
+  shouldAutoPreload() {
+    return this.options.autoPreload !== false;
+  }
+
+  // 🔹 NEW: Get files that should be auto-preloaded based on autoPreload setting
+  getAutoPreloadFiles() {
+    if (this.options.autoPreload === true) {
+      // Preload all visible and previewable files
+      return this.getPreloadableFiles();
+    } else if (Array.isArray(this.options.autoPreload)) {
+      // Preload only specified file types
+      return this.options.files.filter(
+        (file) =>
+          this.options.visibleTypes.includes(file.type) &&
+          this.options.previewableTypes.includes(file.type) &&
+          this.options.autoPreload.includes(file.type)
+      );
+    }
+    return [];
+  }
+
+  // 🔹 Get files that CAN be preloaded (visible AND previewable)
   getPreloadableFiles() {
     return this.options.files.filter(
       (file) =>
@@ -81,6 +108,10 @@ export default class MixCarousal {
   }
 
   generateHTML() {
+    // 🔹 FIXED: Show toggle button if autoPreload is false or array (not true)
+    const showToggleButton =
+      this.options.autoPreload !== true && this.options.enableManualLoading;
+
     return `
       <div class="mg-container">
         ${this.options.showShortcuts ? this.generateShortcutsHTML() : ""}
@@ -110,6 +141,18 @@ export default class MixCarousal {
               <span class="mg-file-badge" data-mg-modal-filetype>TYPE</span>
             </div>
             <div class="mg-modal-actions">
+              ${
+                showToggleButton
+                  ? `
+              <button class="mg-modal-btn mg-preload-toggle-btn" data-mg-preload-toggle title="Toggle Preload">
+                <svg class="mg-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                </svg>
+              </button>
+              `
+                  : ""
+              }
               <button class="mg-modal-btn mg-download-btn" data-mg-download title="Download (D)">
                 <svg class="mg-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
@@ -208,27 +251,23 @@ export default class MixCarousal {
       )
       .join("");
 
+    // 🔹 FIXED: Grid thumbnails ALWAYS load (not affected by autoPreload)
     setTimeout(() => this.applyLazyPlaceholder(), 300);
   }
 
-  // 🔹 FIXED: Properly apply loaded class to grid thumbnails
   applyLazyPlaceholder() {
     const thumbnails =
       this.options.container.querySelectorAll(".mg-lazy-thumb");
 
     thumbnails.forEach((img, index) => {
       const markLoaded = () => {
-        // 🔹 FIX: Add mg-loaded class to the wrapper, not just parent
         const wrapper = img.closest(".mg-thumb-wrapper");
         if (wrapper) {
           wrapper.classList.add("mg-loaded");
         }
 
-        // Cache the loaded image
-        if (!this.preloader.preloadedMedia[index]) {
-          this.preloader.preloadedMedia[index] = img.src;
-          this.preloader.loadingProgress[index] = 100;
-        }
+        // 🔹 FIXED: Don't mark as preloaded in preloader, just UI
+        // Grid thumbnails are separate from main file preloading
       };
 
       img.addEventListener("load", markLoaded);
@@ -294,7 +333,6 @@ export default class MixCarousal {
   }
 
   openModal(index) {
-    // Pass all files to modal, it will filter by visibleTypes internally
     this.modal.open(index, this.options.files);
   }
 
@@ -314,14 +352,12 @@ export default class MixCarousal {
   }
 
   destroy() {
-    // Cleanup
     this.preloader.cleanup();
     this.modal.destroy();
   }
 
   // Public API methods
   preloadFiles() {
-    // 🔹 FIX: Only preload visible AND previewable files
     this.preloader.preloadAll(this.getPreloadableFiles());
   }
 
@@ -329,9 +365,8 @@ export default class MixCarousal {
     this.options.files = files;
     this.renderGrid();
 
-    if (this.options.autoPreload) {
-      // 🔹 FIX: Only preload visible AND previewable files
-      this.preloader.preloadAll(this.getPreloadableFiles());
+    if (this.shouldAutoPreload()) {
+      this.preloader.preloadAll(this.getAutoPreloadFiles());
     }
   }
 }

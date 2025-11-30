@@ -6,6 +6,8 @@ export class MediaPreloader {
     this.preloadedMedia = {};
     this.loadingProgress = {};
     this.onProgressCallbacks = [];
+    this.activeRequests = {}; // Track active XHR requests
+    this.isPaused = false; // Track pause state
   }
 
   onProgress(callback) {
@@ -16,15 +18,62 @@ export class MediaPreloader {
     this.onProgressCallbacks.forEach((cb) => cb(index, progress));
   }
 
-  // 🔹 FIX: Accept array of files with their original indices
   preloadAll(files) {
+    this.isPaused = false;
     files.forEach((file) => {
-      // Find the original index in the full files array
       const originalIndex = this.options.files.indexOf(file);
       if (originalIndex !== -1) {
         this.preloadFile(file, originalIndex);
       }
     });
+  }
+
+  // 🔹 FIXED: Stop all active preloading
+  stop() {
+    this.isPaused = true;
+    Object.keys(this.activeRequests).forEach((index) => {
+      const xhr = this.activeRequests[index];
+      if (xhr) {
+        xhr.abort();
+        delete this.activeRequests[index];
+      }
+    });
+  }
+
+  // 🔹 Check if file should be preloaded based on autoPreload setting
+  shouldPreloadFile(file) {
+    const autoPreload = this.options.autoPreload;
+
+    // If autoPreload is true, preload all visible and previewable files
+    if (autoPreload === true) {
+      return (
+        this.options.visibleTypes.includes(file.type) &&
+        this.options.previewableTypes.includes(file.type)
+      );
+    }
+
+    // If autoPreload is array, only preload specified types
+    if (Array.isArray(autoPreload)) {
+      return (
+        this.options.visibleTypes.includes(file.type) &&
+        this.options.previewableTypes.includes(file.type) &&
+        autoPreload.includes(file.type)
+      );
+    }
+
+    // If autoPreload is false, don't preload
+    return false;
+  }
+
+  // 🔹 Check if file was auto-preloaded
+  isFileAutoPreloaded(file) {
+    if (this.options.autoPreload === true) {
+      return true;
+    }
+    if (Array.isArray(this.options.autoPreload)) {
+      return this.options.autoPreload.includes(file.type);
+    }
+    return false;
   }
 
   preloadFile(file, index) {
@@ -33,7 +82,12 @@ export class MediaPreloader {
       return Promise.resolve(this.preloadedMedia[index]);
     }
 
-    // 🔹 FIX: Check if this file type should be preloaded
+    // Skip if paused
+    if (this.isPaused) {
+      return Promise.resolve(null);
+    }
+
+    // Check if this file type should be preloaded
     const shouldPreload =
       this.options.visibleTypes.includes(file.type) &&
       this.options.previewableTypes.includes(file.type);
@@ -46,6 +100,8 @@ export class MediaPreloader {
 
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
+      this.activeRequests[index] = xhr;
+
       xhr.open("GET", file.url, true);
 
       // Set responseType based on file type
@@ -57,6 +113,11 @@ export class MediaPreloader {
           : "text";
 
       xhr.onprogress = (e) => {
+        if (this.isPaused) {
+          xhr.abort();
+          return;
+        }
+
         if (e.lengthComputable) {
           this.loadingProgress[index] = Math.min(
             (e.loaded / e.total) * 100,
@@ -69,6 +130,8 @@ export class MediaPreloader {
       };
 
       xhr.onload = () => {
+        delete this.activeRequests[index];
+
         if (xhr.status === 200) {
           if (["image", "video", "pdf"].includes(file.type)) {
             this.preloadedMedia[index] = URL.createObjectURL(xhr.response);
@@ -86,9 +149,15 @@ export class MediaPreloader {
       };
 
       xhr.onerror = () => {
+        delete this.activeRequests[index];
         this.loadingProgress[index] = 100;
         this.notifyProgress(index, 100);
         reject(new Error("Network error"));
+      };
+
+      xhr.onabort = () => {
+        delete this.activeRequests[index];
+        resolve(null);
       };
 
       xhr.send();
@@ -113,6 +182,9 @@ export class MediaPreloader {
   }
 
   cleanup() {
+    // Stop any active preloading
+    this.stop();
+
     // Revoke blob URLs to free memory
     Object.values(this.preloadedMedia).forEach((url) => {
       if (typeof url === "string" && url.startsWith("blob:")) {
