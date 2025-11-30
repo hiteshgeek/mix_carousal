@@ -105,6 +105,7 @@ export class ModalController {
     this.renderer.render(file, this.currentIndex, contentEl);
   }
 
+  // 🔹 FIX: Only render thumbnails for files in visibleTypes
   renderThumbnailStrip() {
     const modal = this.options.container.querySelector("[data-mg-modal]");
     const strip = modal.querySelector("[data-mg-thumbnail-strip]");
@@ -114,28 +115,36 @@ export class ModalController {
       return;
     }
 
-    strip.innerHTML = this.files
+    // 🔹 Filter files by visibleTypes for modal thumbnail strip
+    const visibleFiles = this.files.filter((file) =>
+      this.options.visibleTypes.includes(file.type)
+    );
+
+    strip.innerHTML = visibleFiles
       .map((file, i) => {
-        const activeClass = i === this.currentIndex ? " mg-active" : "";
+        // Find the original index in the full files array
+        const originalIndex = this.files.indexOf(file);
+        const activeClass =
+          originalIndex === this.currentIndex ? " mg-active" : "";
         const videoIcon =
           file.type === "video"
             ? '<div class="mg-video-icon-wrapper"><i class="fa fa-play mg-video-icon"></i></div>'
             : "";
 
-        // 🔹 FIX: Check if file is already loaded before rendering progress indicator
-        const progress = this.preloader.getProgress(i);
+        // 🔹 Check if file is already loaded before rendering progress indicator
+        const progress = this.preloader.getProgress(originalIndex);
         const isLoaded = progress === 100;
         const loadedClass = isLoaded ? " mg-loaded" : "";
 
         return `
-        <div class="mg-strip-thumbnail${activeClass}${loadedClass}" data-mg-strip-index="${i}">
+        <div class="mg-strip-thumbnail${activeClass}${loadedClass}" data-mg-strip-index="${originalIndex}">
           <div class="mg-thumb-wrapper">
             ${videoIcon}
             <img src="${
               file.thumbnail
             }" class="mg-thumbnail-image mg-lazy-thumb" />
           </div>
-          ${!isLoaded ? this.renderProgressIndicator(i) : ""}
+          ${!isLoaded ? this.renderProgressIndicator(originalIndex) : ""}
         </div>
       `;
       })
@@ -206,8 +215,9 @@ export class ModalController {
     const modal = this.options.container.querySelector("[data-mg-modal]");
     const strip = modal.querySelector("[data-mg-thumbnail-strip]");
 
-    strip.querySelectorAll(".mg-strip-thumbnail").forEach((thumb, i) => {
-      if (i === this.currentIndex) {
+    strip.querySelectorAll(".mg-strip-thumbnail").forEach((thumb) => {
+      const thumbIndex = parseInt(thumb.dataset.mgStripIndex);
+      if (thumbIndex === this.currentIndex) {
         thumb.classList.add("mg-active");
         thumb.scrollIntoView({
           behavior: "smooth",

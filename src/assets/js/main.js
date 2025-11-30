@@ -151,4 +151,6 @@ const gallery = new MixCarousal({
   showShortcuts: true,
   maxPreviewRows: 100,
   maxTextPreviewChars: 50000,
+  // visibleTypes: ["image", "video", "pdf"],
+  // previewableTypes: ["image"],
 });

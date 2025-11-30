@@ -53,16 +53,25 @@ export default class MixCarousal {
     this.render();
 
     if (this.options.autoPreload) {
-      this.preloader.preloadAll(this.getVisibleFiles());
+      // 🔹 FIX: Only preload files that are both visible AND previewable
+      this.preloader.preloadAll(this.getPreloadableFiles());
     }
 
     this.attachEventListeners();
   }
 
-  getVisibleFiles() {
-    return this.options.files.filter((file) =>
-      this.options.visibleTypes.includes(file.type)
+  // 🔹 NEW: Get files that should be preloaded (visible AND previewable)
+  getPreloadableFiles() {
+    return this.options.files.filter(
+      (file) =>
+        this.options.visibleTypes.includes(file.type) &&
+        this.options.previewableTypes.includes(file.type)
     );
+  }
+
+  // All files are shown in the grid
+  getVisibleFiles() {
+    return this.options.files;
   }
 
   render() {
@@ -206,7 +215,6 @@ export default class MixCarousal {
   applyLazyPlaceholder() {
     const thumbnails =
       this.options.container.querySelectorAll(".mg-lazy-thumb");
-    const visibleFiles = this.getVisibleFiles();
 
     thumbnails.forEach((img, index) => {
       const markLoaded = () => {
@@ -286,12 +294,12 @@ export default class MixCarousal {
   }
 
   openModal(index) {
-    this.modal.open(index, this.getVisibleFiles());
+    // Pass all files to modal, it will filter by visibleTypes internally
+    this.modal.open(index, this.options.files);
   }
 
   downloadFile(index) {
-    const visibleFiles = this.getVisibleFiles();
-    const file = visibleFiles[index];
+    const file = this.options.files[index];
 
     if (this.options.onFileDownload) {
       this.options.onFileDownload(file, index);
@@ -313,7 +321,8 @@ export default class MixCarousal {
 
   // Public API methods
   preloadFiles() {
-    this.preloader.preloadAll(this.getVisibleFiles());
+    // 🔹 FIX: Only preload visible AND previewable files
+    this.preloader.preloadAll(this.getPreloadableFiles());
   }
 
   updateFiles(files) {
@@ -321,7 +330,8 @@ export default class MixCarousal {
     this.renderGrid();
 
     if (this.options.autoPreload) {
-      this.preloader.preloadAll(this.getVisibleFiles());
+      // 🔹 FIX: Only preload visible AND previewable files
+      this.preloader.preloadAll(this.getPreloadableFiles());
     }
   }
 }

@@ -1,4 +1,4 @@
-// MediaPreloader.js - Handles file preloading and caching
+// MediaPreloader.js - Handles file preloading and caching (FIXED)
 
 export class MediaPreloader {
   constructor(options) {
@@ -16,9 +16,14 @@ export class MediaPreloader {
     this.onProgressCallbacks.forEach((cb) => cb(index, progress));
   }
 
+  // 🔹 FIX: Accept array of files with their original indices
   preloadAll(files) {
-    files.forEach((file, index) => {
-      this.preloadFile(file, index);
+    files.forEach((file) => {
+      // Find the original index in the full files array
+      const originalIndex = this.options.files.indexOf(file);
+      if (originalIndex !== -1) {
+        this.preloadFile(file, originalIndex);
+      }
     });
   }
 
@@ -26,6 +31,15 @@ export class MediaPreloader {
     // Skip if already loaded
     if (this.preloadedMedia[index] && this.loadingProgress[index] === 100) {
       return Promise.resolve(this.preloadedMedia[index]);
+    }
+
+    // 🔹 FIX: Check if this file type should be preloaded
+    const shouldPreload =
+      this.options.visibleTypes.includes(file.type) &&
+      this.options.previewableTypes.includes(file.type);
+
+    if (!shouldPreload) {
+      return Promise.resolve(null);
     }
 
     this.loadingProgress[index] = this.loadingProgress[index] || 0;
