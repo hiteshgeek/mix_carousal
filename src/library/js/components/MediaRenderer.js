@@ -1,4 +1,4 @@
-// MediaRenderer.js - Handles rendering with Fixed Autoload Logic
+// MediaRenderer.js - Handles rendering with Fixed Autoload Logic and Cleanup
 
 export class MediaRenderer {
   constructor(options, preloader) {
@@ -21,6 +21,11 @@ export class MediaRenderer {
 
     const progress = this.preloader.getProgress(index);
 
+    // 🔹 Show loading if progress is between 0 and 100
+    if (progress > 0 && progress < 100) {
+      return this.renderLoading(file.type, progress, container, index);
+    }
+
     // 🔹 FIXED: Check if file was NOT auto-preloaded
     const wasAutoPreloaded = this.wasFileAutoPreloaded(file);
 
@@ -33,27 +38,31 @@ export class MediaRenderer {
       }
     }
 
-    // Show loading if still preloading
-    if (progress > 0 && progress < 100) {
-      return this.renderLoading(file.type, progress, container, index);
+    // If progress is 100, render the content
+    if (progress === 100) {
+      switch (file.type) {
+        case "image":
+          return this.renderImage(file, index, container);
+        case "video":
+          return this.renderVideo(file, index, container);
+        case "pdf":
+          return this.renderPDF(file, index, container);
+        case "text":
+          return this.renderText(file, index, container);
+        case "csv":
+          return this.renderCSV(file, index, container);
+        case "excel":
+          return this.renderExcel(file, index, container);
+        default:
+          return this.renderNoPreview(file, container);
+      }
     }
 
-    // Render based on type
-    switch (file.type) {
-      case "image":
-        return this.renderImage(file, index, container);
-      case "video":
-        return this.renderVideo(file, index, container);
-      case "pdf":
-        return this.renderPDF(file, index, container);
-      case "text":
-        return this.renderText(file, index, container);
-      case "csv":
-        return this.renderCSV(file, index, container);
-      case "excel":
-        return this.renderExcel(file, index, container);
-      default:
-        return this.renderNoPreview(file, container);
+    // Default: show load button
+    if (this.options.enableManualLoading) {
+      return this.renderLoadButton(file, index, container);
+    } else {
+      return this.renderNoPreviewManualDisabled(file, container);
     }
   }
 

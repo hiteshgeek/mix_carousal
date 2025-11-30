@@ -197,11 +197,11 @@ $border-radius-sm: 0.5rem;
     &::before {
       opacity: 0;
       visibility: hidden;
-      animation: none; // 👈 Stop the animation
+      animation: none;
     }
 
     .mg-lazy-thumb {
-      opacity: 1; // 👈 Show the image
+      opacity: 1;
     }
 
     .mg-video-icon-wrapper {
@@ -227,7 +227,7 @@ $border-radius-sm: 0.5rem;
   object-fit: cover;
   transition: transform $transition-normal;
   position: relative;
-  z-index: 2; // 👈 Ensure image is above shimmer
+  z-index: 2;
 }
 
 // 🔹 FIX: Lazy loaded images start hidden
@@ -246,7 +246,7 @@ $border-radius-sm: 0.5rem;
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  z-index: 3; // 👈 Above image
+  z-index: 3;
 }
 
 .mg-video-icon {
@@ -274,7 +274,7 @@ $border-radius-sm: 0.5rem;
   cursor: pointer;
   opacity: 0;
   transition: all $transition-fast;
-  z-index: 4; // 👈 Above all
+  z-index: 4;
 
   &:hover {
     background: $color-primary;
@@ -372,39 +372,97 @@ $border-radius-sm: 0.5rem;
 }
 
 .mg-modal-btn {
-  width: 2.5rem;
   height: 2.5rem;
   @include flex-center;
+  gap: 0.5rem;
+  padding: 0 1rem;
   background: rgba(30, 41, 59, 0.8);
   border: none;
   border-radius: $border-radius-sm;
   color: white;
   cursor: pointer;
   transition: all $transition-fast;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+
+  .mg-btn-text {
+    display: inline-block;
+  }
+
+  .mg-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    flex-shrink: 0;
+  }
 
   &:hover {
     background: rgba(51, 65, 85, 0.8);
   }
 
-  &.mg-download-btn:hover {
-    background: $color-primary;
-  }
+  &.mg-download-btn {
+    padding: 0;
+    width: 2.5rem;
 
-  &.mg-close-btn:hover {
-    background: #ef4444;
-  }
+    .mg-btn-text {
+      display: none;
+    }
 
-  // 🔹 NEW: Preload toggle button styles
-  &.mg-preload-toggle-btn {
+    .mg-icon {
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+
     &:hover {
-      background: #10b981;
+      background: $color-primary;
+    }
+  }
+
+  &.mg-close-btn {
+    padding: 0;
+    width: 2.5rem;
+
+    .mg-btn-text {
+      display: none;
+    }
+
+    .mg-icon {
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+
+    &:hover {
+      background: #ef4444;
+    }
+  }
+
+  // 🔹 NEW: Preload toggle button with text - larger and prominent
+  &.mg-preload-toggle-btn {
+    padding: 0 1.5rem;
+    height: 3rem;
+    min-width: 140px;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    background: rgba(16, 185, 129, 0.2);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+
+    .mg-icon {
+      width: 1.75rem;
+      height: 1.75rem;
+    }
+
+    &:hover {
+      background: rgba(16, 185, 129, 0.3);
+      border-color: rgba(16, 185, 129, 0.5);
     }
 
     &.mg-preloading {
-      background: #f59e0b;
+      background: rgba(245, 158, 11, 0.2);
+      border: 1px solid rgba(245, 158, 11, 0.3);
 
       &:hover {
-        background: #d97706;
+        background: rgba(245, 158, 11, 0.3);
+        border-color: rgba(245, 158, 11, 0.5);
       }
 
       .mg-spin {
@@ -523,7 +581,7 @@ $border-radius-sm: 0.5rem;
   margin: 0;
 }
 
-// 🔹 NEW: Placeholder action buttons
+// 🔹 Placeholder action buttons
 .mg-placeholder-load-btn,
 .mg-placeholder-download-btn {
   margin-top: 1rem;
@@ -760,7 +818,7 @@ $border-radius-sm: 0.5rem;
   }
 }
 
-// 🔹 FIXED: Modal thumbnail strip items
+// Modal thumbnail strip items
 .mg-strip-thumbnail {
   flex-shrink: 0;
   width: 5rem;
@@ -784,7 +842,6 @@ $border-radius-sm: 0.5rem;
     transform: scale(1.1);
   }
 
-  // 🔹 FIX: When loaded in modal, hide progress indicator
   &.mg-loaded {
     .mg-preload-indicator::before {
       display: none !important;
@@ -809,7 +866,7 @@ $border-radius-sm: 0.5rem;
   }
 }
 
-// 🔹 Modal thumbnail progress indicator
+// Modal thumbnail progress indicator
 .mg-preload-indicator {
   position: absolute;
   inset: 0;
@@ -864,6 +921,7 @@ $border-radius-sm: 0.5rem;
 .mg-icon {
   width: 1.25rem;
   height: 1.25rem;
+  flex-shrink: 0;
 }
 
 // Responsive
@@ -879,9 +937,40 @@ $border-radius-sm: 0.5rem;
   .mg-modal-container {
     padding: 0.5rem;
   }
+
+  // 🔹 Hide button text on mobile for download/close, keep Load All visible
+  .mg-modal-btn {
+    &.mg-download-btn,
+    &.mg-close-btn {
+      padding: 0;
+      width: 2.5rem;
+
+      .mg-btn-text {
+        display: none;
+      }
+
+      .mg-icon {
+        width: 1.5rem;
+        height: 1.5rem;
+      }
+    }
+
+    // Keep Load All button text visible and properly sized on mobile
+    &.mg-preload-toggle-btn {
+      padding: 0 1.25rem;
+      height: 2.75rem;
+      min-width: 130px;
+      font-size: 0.875rem;
+
+      .mg-icon {
+        width: 1.5rem;
+        height: 1.5rem;
+      }
+    }
+  }
 }
 
-// 🔹 Additional safety rule for loaded thumbnails
+// Additional safety rule for loaded thumbnails
 .mg-strip-thumbnail.mg-loaded .mg-preload-indicator {
   display: none !important;
 }

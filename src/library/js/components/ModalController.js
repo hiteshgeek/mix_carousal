@@ -62,7 +62,7 @@ export class ModalController {
   // 🔹 FIXED: Toggle preloading all files
   togglePreload() {
     if (this.isPreloading) {
-      this.stopPreload();
+      this.pausePreload();
     } else {
       this.startPreload();
     }
@@ -73,6 +73,24 @@ export class ModalController {
     this.isPreloading = true;
     this.updatePreloadButton();
 
+    // 🔹 CRITICAL: Immediately show loading state for current file
+    const currentFile = this.files[this.currentIndex];
+    const contentEl = this.options.container.querySelector(
+      "[data-mg-modal-content]"
+    );
+    const currentProgress = this.preloader.getProgress(this.currentIndex);
+
+    // If current file is previewable and not fully loaded, show loading immediately
+    if (this.renderer.canPreview(currentFile.type) && currentProgress < 100) {
+      // Force loading state to show immediately
+      this.renderer.renderLoading(
+        currentFile.type,
+        currentProgress,
+        contentEl,
+        this.currentIndex
+      );
+    }
+
     const preloadableFiles = this.files.filter(
       (file) =>
         this.options.visibleTypes.includes(file.type) &&
@@ -82,11 +100,29 @@ export class ModalController {
     this.preloader.preloadAll(preloadableFiles);
   }
 
-  // 🔹 FIXED: Stop preloading - use correct method name
-  stopPreload() {
+  // 🔹 NEW: Pause preloading (not stop - keeps progress)
+  pausePreload() {
     this.isPreloading = false;
+    this.preloader.pause(); // Pause, not stop
     this.updatePreloadButton();
-    this.preloader.stop();
+
+    // 🔹 CRITICAL: Immediately clear loading interval in renderer
+    this.renderer.clearLoadingInterval();
+
+    // 🔹 Show "Preview Not Loaded" for current file if not fully loaded
+    const currentFile = this.files[this.currentIndex];
+    const contentEl = this.options.container.querySelector(
+      "[data-mg-modal-content]"
+    );
+    const currentProgress = this.preloader.getProgress(this.currentIndex);
+
+    // Force re-render to show proper state (Preview Not Loaded or loaded content)
+    if (this.renderer.canPreview(currentFile.type)) {
+      // Clear the loading interval first
+      this.renderer.clearLoadingInterval();
+      // Then re-render
+      this.renderer.render(currentFile, this.currentIndex, contentEl);
+    }
   }
 
   // 🔹 Update preload button state
@@ -98,22 +134,44 @@ export class ModalController {
 
     if (this.isPreloading) {
       btn.classList.add("mg-preloading");
-      btn.title = "Stop Preload";
-      btn.innerHTML = `
-        <svg class="mg-icon mg-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-        </svg>
-      `;
-    } else {
-      btn.classList.remove("mg-preloading");
-      btn.title = "Start Preload";
+      btn.title = "Click to Pause Loading";
       btn.innerHTML = `
         <svg class="mg-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+            d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
         </svg>
+        <span class="mg-btn-text">Pause Loading</span>
       `;
+    } else {
+      btn.classList.remove("mg-preloading");
+
+      // Check if we have any partial progress (paused state vs initial state)
+      const hasPartialProgress = this.files.some((file, index) => {
+        const progress = this.preloader.getProgress(index);
+        return progress > 0 && progress < 100;
+      });
+
+      if (hasPartialProgress) {
+        btn.title = "Click to Resume Loading";
+        btn.innerHTML = `
+          <svg class="mg-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <span class="mg-btn-text">Resume Loading</span>
+        `;
+      } else {
+        btn.title = "Click to Load All Files";
+        btn.innerHTML = `
+          <svg class="mg-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+          </svg>
+          <span class="mg-btn-text">Load All</span>
+        `;
+      }
     }
   }
 
@@ -128,6 +186,9 @@ export class ModalController {
 
     const modal = this.options.container.querySelector("[data-mg-modal]");
     modal.classList.add("mg-active");
+
+    // 🔹 Ensure button shows correct initial state
+    this.updatePreloadButton();
 
     this.renderContent();
     this.renderThumbnailStrip();
@@ -344,7 +405,7 @@ export class ModalController {
 
   destroy() {
     if (this.isPreloading) {
-      this.stopPreload();
+      this.pausePreload();
     }
     // 🔹 NEW: Cleanup renderer
     this.renderer.cleanup();
